@@ -8,18 +8,19 @@ Playground = List[Row]
 def solve(playground: Playground) -> Tuple[Playground, bool]:
     rows_available = available_in_rows(playground)
     cols_available = available_in_cols(playground)
-    matrix = []
+    matrix: List[List[Set[Value]]] = []
     to_input = 0
     for i_row in range(9):
         matrix.append([])
         for i_col in range(9):
             square_available = available_in_squares(playground)
             if playground[i_row][i_col] != 0:
-                matrix[i_row].append({})
+                matrix[i_row].append(set())
                 continue
             available = rows_available[i_row].copy()
             available = available.intersection(cols_available[i_col])
-            available = available.intersection(square_available[i_row // 3][i_col // 3])
+            available = available.intersection(
+                square_available[i_row // 3][i_col // 3])
             to_input += 1
             matrix[i_row].append(available)
 
@@ -44,7 +45,8 @@ def solve(playground: Playground) -> Tuple[Playground, bool]:
     return playground, True
 
 
-def available_in_square(playground: Playground, pos: Tuple[int, int]) -> Set[Value]:
+def available_in_square(playground: Playground, pos: Tuple[int, int]) \
+        -> Set[Value]:
     row, col = pos
     used: Set[Value] = set()
     for i_row in range(3):
@@ -58,11 +60,13 @@ def available_in_squares(playground: Playground) -> List[List[Set[Value]]]:
     for i_row in range(0, 9, 3):
         result.append([])
         for i_col in range(0, 9, 3):
-            result[i_row // 3].append(available_in_square(playground, (i_row, i_col)))
+            result[i_row // 3].append(
+                available_in_square(playground, (i_row, i_col)))
     return result
 
 
-def available_in_col(playground: Playground, pos: Tuple[int, int]) -> Set[Value]:
+def available_in_col(playground: Playground, pos: Tuple[int, int]) \
+        -> Set[Value]:
     row, col = pos
     used: Set[Value] = set([row[col] for row in playground])
     return set(range(10)) - used
@@ -75,7 +79,8 @@ def available_in_cols(playground: Playground) -> List[Set[Value]]:
     return result
 
 
-def available_in_row(playground: Playground, pos: Tuple[int, int]) -> Set[Value]:
+def available_in_row(playground: Playground, pos: Tuple[int, int]) \
+        -> Set[Value]:
     row, _ = pos
     used: Set[Value] = set(playground[row])
     return set(range(10)) - used
@@ -127,7 +132,7 @@ def draw(playground: Playground) -> None:
 # END DRAW
 
 
-def main():
+def main() -> None:
     plg: Playground = [[0, 5, 0, 2, 4, 0, 1, 9, 8],
                        [4, 9, 0, 1, 0, 6, 7, 0, 0],
                        [0, 1, 2, 3, 0, 8, 5, 6, 0],
