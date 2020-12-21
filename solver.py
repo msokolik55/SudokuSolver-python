@@ -1,24 +1,130 @@
-from typing import List, Set, Optional
+from typing import List, Set, Tuple
 
-Row = List[int]
+Value = int
+Row = List[Value]
 Playground = List[Row]
 
 
-def row_without_number() -> None:
-    print(f"{9 * '+---'}+")
+def solve(playground: Playground) -> Tuple[Playground, bool]:
+    rows_available = available_in_rows(playground)
+    cols_available = available_in_cols(playground)
+    matrix = []
+    to_input = 0
+    for i_row in range(9):
+        matrix.append([])
+        for i_col in range(9):
+            square_available = available_in_squares(playground)
+            if playground[i_row][i_col] != 0:
+                matrix[i_row].append({})
+                continue
+            available = rows_available[i_row].copy()
+            available = available.intersection(cols_available[i_col])
+            available = available.intersection(square_available[i_row // 3][i_col // 3])
+            to_input += 1
+            matrix[i_row].append(available)
+
+    for i_row, row in enumerate(matrix):
+        for i_col in range(9):
+            if len(row[i_col]) == 1:
+                playground[i_row][i_col] = list(row[i_col])[0]
+                to_input -= 1
+
+    if to_input > 0:
+        for i_row, row in enumerate(matrix):
+            for i_col in range(9):
+                if len(row[i_col]) > 1:
+                    options: List[Value] = list(row[i_col])
+                    for opt in options:
+                        playground[i_row][i_col] = opt
+                        solution, is_result = solve(playground)
+                        if is_result:
+                            return solution, True
+        return playground, False
+
+    return playground, True
+
+
+def available_in_square(playground: Playground, pos: Tuple[int, int]) -> Set[Value]:
+    row, col = pos
+    used: Set[Value] = set()
+    for i_row in range(3):
+        for i_col in range(3):
+            used.add(playground[row + i_row][col + i_col])
+    return set(range(10)) - used
+
+
+def available_in_squares(playground: Playground) -> List[List[Set[Value]]]:
+    result: List[List[Set[Value]]] = []
+    for i_row in range(0, 9, 3):
+        result.append([])
+        for i_col in range(0, 9, 3):
+            result[i_row // 3].append(available_in_square(playground, (i_row, i_col)))
+    return result
+
+
+def available_in_col(playground: Playground, pos: Tuple[int, int]) -> Set[Value]:
+    row, col = pos
+    used: Set[Value] = set([row[col] for row in playground])
+    return set(range(10)) - used
+
+
+def available_in_cols(playground: Playground) -> List[Set[Value]]:
+    result: List[Set[Value]] = []
+    for i_col in range(9):
+        result.append(available_in_col(playground, (0, i_col)))
+    return result
+
+
+def available_in_row(playground: Playground, pos: Tuple[int, int]) -> Set[Value]:
+    row, _ = pos
+    used: Set[Value] = set(playground[row])
+    return set(range(10)) - used
+
+
+def available_in_rows(playground: Playground) -> List[Set[Value]]:
+    result: List[Set[Value]] = []
+    for i_row in range(9):
+        result.append(available_in_row(playground, (i_row, 0)))
+    return result
+
+
+# DRAW
+def row_without_number(char: str, i_row: int) -> None:
+    if i_row % 3 == 2:
+        cell = 4 * char
+    else:
+        cell = char + "---"
+    row = f"{9 * cell}{char}"
+    # row = '#' + row[1:-1] + '#'
+    alter = ""
+    for i in range(len(row) - 1):
+        if i % 12 == 0:
+            alter += '#'
+        else:
+            alter += row[i]
+    alter += '#'
+    print(alter)
 
 
 def draw(playground: Playground) -> None:
-    row_without_number()
-    for row in playground:
-        print('|', end='')
-        for elem in row:
-            if elem == 0:
-                print("   ", end='|')
+    print(f"{(4 * 9 + 1) * '#'}")
+    for i_row, row in enumerate(playground):
+        print('#', end='')
+        for i_col, elem in enumerate(row):
+            if i_col % 3 == 2:
+                ending = '#'
             else:
-                print(f" {elem} ", end='|')
+                ending = '|'
+            if elem == 0:
+                print("   ", end=ending)
+            else:
+                print(f" {elem} ", end=ending)
         print()
-        row_without_number()
+        if i_row % 3 == 2:
+            row_without_number('#', i_row)
+        else:
+            row_without_number('+', i_row)
+# END DRAW
 
 
 def main():
@@ -31,6 +137,13 @@ def main():
                        [0, 0, 4, 9, 7, 5, 3, 2, 1],
                        [2, 7, 0, 8, 1, 0, 0, 4, 5],
                        [5, 3, 1, 0, 0, 2, 8, 7, 0]]
+    print("Original SUDOKU")
+    draw(plg)
+    """solved_plg, _ = solve(plg)"""
+    print()
+    print("Solved SUDOKU")
+    solve(plg)
+    """draw(solved_plg)"""
     draw(plg)
 
 
