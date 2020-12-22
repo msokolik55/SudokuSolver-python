@@ -1,11 +1,11 @@
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Optional
 
 Value = int
 Row = List[Value]
 Playground = List[Row]
 
 
-def solve(playground: Playground) -> Tuple[Playground, bool]:
+def solve(playground: Playground) -> Tuple[Optional[Playground], bool]:
     rows_available = available_in_rows(playground)
     cols_available = available_in_cols(playground)
     matrix: List[List[Set[Value]]] = []
@@ -24,12 +24,40 @@ def solve(playground: Playground) -> Tuple[Playground, bool]:
             to_input += 1
             matrix[i_row].append(available)
 
+    # inserting only one option
     for i_row, row in enumerate(matrix):
         for i_col in range(9):
             if len(row[i_col]) == 1:
-                playground[i_row][i_col] = list(row[i_col])[0]
-                matrix[i_row][i_col] = set()
+                value = list(row[i_col])[0]
+                playground[i_row][i_col] = value
+
+                for i in range(9):
+                    matrix[i_row][i] -= {value}
+                    matrix[i][i_col] -= {value}
                 to_input -= 1
+
+    # checking duplicities
+    for i_row in range(9):
+        for i_col in range(9):
+            if playground[i_row][i_col] == 0 and len(matrix[i_row][i_col]) == 0:
+                return None, False
+
+    """# checking rows
+    for row in playground:
+        diff_values: Set[Value] = set(row)
+        diff_values -= {0}
+        values: List[Value] = [elem for elem in row if elem > 0]
+        if len(diff_values) != len(values):
+            return None, False
+
+    # checking cols
+    for i_col in range(9):
+        col: List[Value] = [row[i_col] for row in playground]
+        diff_values: Set[Value] = set(col)
+        diff_values -= {0}
+        values: List[Value] = [elem for elem in col if elem > 0]
+        if len(diff_values) != len(values):
+            return None, False"""
 
     if to_input > 0:
         for i_row, row in enumerate(matrix):
@@ -38,12 +66,12 @@ def solve(playground: Playground) -> Tuple[Playground, bool]:
                     options: List[Value] = list(row[i_col])
                     for opt in options:
                         playground[i_row][i_col] = opt
-                        new_plg = playground.copy()
+                        new_plg = [line[:] for line in playground]
                         solution, is_result = solve(new_plg)
                         if is_result:
                             return solution, True
                         playground[i_row][i_col] = 0
-        return playground, False
+        return None, False
 
     return playground, True
 
@@ -169,9 +197,9 @@ def main() -> None:
     # solution
     print()
     print("Solved SUDOKU")
-    solve(plg)
-    draw(plg, assign_tiles)
-    save_file("solution.txt", plg)
+    solved, _ = solve(plg)
+    draw(solved, assign_tiles)
+    save_file("solution.txt", solved)
 
 
 if __name__ == '__main__':
