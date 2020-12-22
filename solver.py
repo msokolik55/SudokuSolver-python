@@ -28,6 +28,7 @@ def solve(playground: Playground) -> Tuple[Playground, bool]:
         for i_col in range(9):
             if len(row[i_col]) == 1:
                 playground[i_row][i_col] = list(row[i_col])[0]
+                matrix[i_row][i_col] = set()
                 to_input -= 1
 
     if to_input > 0:
@@ -37,9 +38,11 @@ def solve(playground: Playground) -> Tuple[Playground, bool]:
                     options: List[Value] = list(row[i_col])
                     for opt in options:
                         playground[i_row][i_col] = opt
-                        solution, is_result = solve(playground)
+                        new_plg = playground.copy()
+                        solution, is_result = solve(new_plg)
                         if is_result:
                             return solution, True
+                        playground[i_row][i_col] = 0
         return playground, False
 
     return playground, True
@@ -132,8 +135,27 @@ def draw(playground: Playground) -> None:
 # END DRAW
 
 
+# FILE HANDLING
+def load_file(path: str) -> Playground:
+    playground: Playground = []
+    with open(path, "r") as file:
+        for line in file:
+            row = line.split()
+            playground.append([int(elem) for elem in row])
+    return playground
+
+
+def save_file(path: str, playground: Playground) -> None:
+    with open(path, "w") as file:
+        for row in playground:
+            line = [str(elem) for elem in row]
+            file.write(" ".join(line) + '\n')
+# END FILE HANDLING
+
+
 def main() -> None:
-    plg: Playground = [[0, 5, 0, 2, 4, 0, 1, 9, 8],
+    plg: Playground = load_file("input.txt")
+    """plg: Playground = [[0, 5, 0, 2, 4, 0, 1, 9, 8],
                        [4, 9, 0, 1, 0, 6, 7, 0, 0],
                        [0, 1, 2, 3, 0, 8, 5, 6, 0],
                        [0, 2, 0, 5, 0, 0, 0, 0, 0],
@@ -141,7 +163,7 @@ def main() -> None:
                        [1, 4, 0, 0, 3, 9, 2, 8, 0],
                        [0, 0, 4, 9, 7, 5, 3, 2, 1],
                        [2, 7, 0, 8, 1, 0, 0, 4, 5],
-                       [5, 3, 1, 0, 0, 2, 8, 7, 0]]
+                       [5, 3, 1, 0, 0, 2, 8, 7, 0]]"""
     print("Original SUDOKU")
     draw(plg)
     """solved_plg, _ = solve(plg)"""
@@ -150,6 +172,7 @@ def main() -> None:
     solve(plg)
     """draw(solved_plg)"""
     draw(plg)
+    save_file("solution.txt", plg)
 
 
 if __name__ == '__main__':
