@@ -97,13 +97,16 @@ def available_in_rows(playground: Playground) -> List[Set[Value]]:
 
 
 # DRAW
+def get_assign_tiles(playground: Playground) -> List[List[bool]]:
+    return [[elem > 0 for elem in row] for row in playground]
+
+
 def row_without_number(char: str, i_row: int) -> None:
     if i_row % 3 == 2:
         cell = 4 * char
     else:
         cell = char + "---"
     row = f"{9 * cell}{char}"
-    # row = '#' + row[1:-1] + '#'
     alter = ""
     for i in range(len(row) - 1):
         if i % 12 == 0:
@@ -114,7 +117,7 @@ def row_without_number(char: str, i_row: int) -> None:
     print(alter)
 
 
-def draw(playground: Playground) -> None:
+def draw(playground: Playground, assign_tiles: List[List[bool]]) -> None:
     print(f"{(4 * 9 + 1) * '#'}")
     for i_row, row in enumerate(playground):
         print('#', end='')
@@ -126,7 +129,10 @@ def draw(playground: Playground) -> None:
             if elem == 0:
                 print("   ", end=ending)
             else:
-                print(f" {elem} ", end=ending)
+                if assign_tiles[i_row][i_col]:
+                    print(f"<{elem}>", end=ending)
+                else:
+                    print(f" {elem} ", end=ending)
         print()
         if i_row % 3 == 2:
             row_without_number('#', i_row)
@@ -154,24 +160,17 @@ def save_file(path: str, playground: Playground) -> None:
 
 
 def main() -> None:
+    # assignment
     plg: Playground = load_file("input.txt")
-    """plg: Playground = [[0, 5, 0, 2, 4, 0, 1, 9, 8],
-                       [4, 9, 0, 1, 0, 6, 7, 0, 0],
-                       [0, 1, 2, 3, 0, 8, 5, 6, 0],
-                       [0, 2, 0, 5, 0, 0, 0, 0, 0],
-                       [9, 0, 7, 0, 2, 0, 0, 0, 0],
-                       [1, 4, 0, 0, 3, 9, 2, 8, 0],
-                       [0, 0, 4, 9, 7, 5, 3, 2, 1],
-                       [2, 7, 0, 8, 1, 0, 0, 4, 5],
-                       [5, 3, 1, 0, 0, 2, 8, 7, 0]]"""
+    assign_tiles = get_assign_tiles(plg)
     print("Original SUDOKU")
-    draw(plg)
-    """solved_plg, _ = solve(plg)"""
+    draw(plg, assign_tiles)
+
+    # solution
     print()
     print("Solved SUDOKU")
     solve(plg)
-    """draw(solved_plg)"""
-    draw(plg)
+    draw(plg, assign_tiles)
     save_file("solution.txt", plg)
 
 
