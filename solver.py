@@ -2,10 +2,73 @@ from typing import List, Set, Tuple, Optional
 
 Value = int
 Row = List[Value]
-Playground = List[Row]
+Playground = Optional[List[Row]]
 
 
-def solve(playground: Playground) -> Tuple[Optional[Playground], bool]:
+def remove_duplicities(cells_options: List[List[Set[Value]]],
+                       pos: Tuple[int, int], value: Value) -> None:
+    i_row, i_col = pos
+    for i in range(9):
+        cells_options[i_row][i] -= {value}
+        cells_options[i][i_col] -= {value}
+
+    new_row, new_col = i_row // 3, i_col // 3
+    for i in range(3):
+        for j in range(3):
+            cells_options[new_row + 1][new_col + 1] -= {value}
+
+
+def solve_rec(playground: Playground, cells_options: List[List[Set[Value]]], to_input: int) \
+        -> Optional[Playground]:
+
+    if to_input == 0:
+        return playground
+
+    # inserting only one option
+    for i_row, row in enumerate(cells_options):
+        for i_col in range(9):
+            if len(row[i_col]) == 1:
+                value = list(row[i_col])[0]
+                playground[i_row][i_col] = value
+                pos = (i_row, i_col)
+                remove_duplicities(cells_options, pos, value)
+                """
+                for i in range(9):
+                    cells_options[i_row][i] -= {value}
+                    cells_options[i][i_col] -= {value}
+                """
+                to_input -= 1
+
+    # checking duplicities
+    for i_row in range(9):
+        for i_col in range(9):
+            if playground[i_row][i_col] == 0 and len(cells_options[i_row][i_col]) == 0:
+                return None
+
+    # if to_input > 0:
+    for i_row, row in enumerate(cells_options):
+        for i_col in range(9):
+            if len(row[i_col]) > 1:
+                options: List[Value] = list(row[i_col])
+                for opt in options:
+                    playground[i_row][i_col] = opt
+
+                    new_plg = [line[:] for line in playground]
+                    new_opts = [[elem.copy() for elem in line] for line in cells_options]
+                    new_opts[i_row][i_col] = set()
+
+                    pos = (i_row, i_col)
+                    remove_duplicities(new_opts, pos, opt)
+
+                    solution = solve_rec(new_plg, new_opts, to_input)
+                    if solution is not None:
+                        return solution
+                    playground[i_row][i_col] = 0
+    return None
+    # return playground
+
+
+def solve(playground: Playground) -> Optional[Playground]:
     rows_available = available_in_rows(playground)
     cols_available = available_in_cols(playground)
     matrix: List[List[Set[Value]]] = []
@@ -24,6 +87,7 @@ def solve(playground: Playground) -> Tuple[Optional[Playground], bool]:
             to_input += 1
             matrix[i_row].append(available)
 
+    """
     # inserting only one option
     for i_row, row in enumerate(matrix):
         for i_col in range(9):
@@ -35,30 +99,17 @@ def solve(playground: Playground) -> Tuple[Optional[Playground], bool]:
                     matrix[i_row][i] -= {value}
                     matrix[i][i_col] -= {value}
                 to_input -= 1
+    """
 
+    """
     # checking duplicities
     for i_row in range(9):
         for i_col in range(9):
             if playground[i_row][i_col] == 0 and len(matrix[i_row][i_col]) == 0:
                 return None, False
+    """
 
-    """# checking rows
-    for row in playground:
-        diff_values: Set[Value] = set(row)
-        diff_values -= {0}
-        values: List[Value] = [elem for elem in row if elem > 0]
-        if len(diff_values) != len(values):
-            return None, False
-
-    # checking cols
-    for i_col in range(9):
-        col: List[Value] = [row[i_col] for row in playground]
-        diff_values: Set[Value] = set(col)
-        diff_values -= {0}
-        values: List[Value] = [elem for elem in col if elem > 0]
-        if len(diff_values) != len(values):
-            return None, False"""
-
+    """
     if to_input > 0:
         for i_row, row in enumerate(matrix):
             for i_col in range(9):
@@ -74,6 +125,9 @@ def solve(playground: Playground) -> Tuple[Optional[Playground], bool]:
         return None, False
 
     return playground, True
+    """
+
+    return solve_rec(playground, matrix, to_input)
 
 
 def available_in_square(playground: Playground, pos: Tuple[int, int]) \
@@ -125,7 +179,10 @@ def available_in_rows(playground: Playground) -> List[Set[Value]]:
 
 
 # DRAW
-def get_assign_tiles(playground: Playground) -> List[List[bool]]:
+def get_assign_tiles(playground: Playground) -> Optional[List[List[bool]]]:
+    if playground is None:
+        return
+
     return [[elem > 0 for elem in row] for row in playground]
 
 
@@ -146,6 +203,9 @@ def row_without_number(char: str, i_row: int) -> None:
 
 
 def draw(playground: Playground, assign_tiles: List[List[bool]]) -> None:
+    if playground is None:
+        return
+
     print(f"{(4 * 9 + 1) * '#'}")
     for i_row, row in enumerate(playground):
         print('#', end='')
@@ -180,6 +240,9 @@ def load_file(path: str) -> Playground:
 
 
 def save_file(path: str, playground: Playground) -> None:
+    if playground is None:
+        return None
+
     with open(path, "w") as file:
         for row in playground:
             line = [str(elem) for elem in row]
@@ -197,7 +260,7 @@ def main() -> None:
     # solution
     print()
     print("Solved SUDOKU")
-    solved, _ = solve(plg)
+    solved = solve(plg)
     draw(solved, assign_tiles)
     save_file("solution.txt", solved)
 
